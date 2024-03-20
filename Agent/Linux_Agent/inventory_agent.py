@@ -1,7 +1,25 @@
 import psutil
 import platform
 from datetime import datetime
+from time import sleep
 import json
+import requests
+import tomllib
+
+def get_configs():     # Coleta dados de configuração do agente (sujeito a mudanças)
+    with open("config.toml", "rb") as f:
+        data = tomllib.load(f)
+    return data
+
+#### HTTP POST #####
+def send_data(json_object, controller_url):
+    try:
+        response = requests.post(controller_url, json=json_object)
+        return response.status_code
+    except Exception as e:
+        return e
+    
+#### DATA COLLECTION ######
 
 def get_size(bytes, suffix="B"):  # byte scale formatter
     """
@@ -126,11 +144,16 @@ def collect_data():
         }
     }
 
-    json_object = json.dumps(x, indent=4)
+    json_object = json.dumps(x)
     #with open("sample1.json", "w") as outfile:
     #    outfile.write(json_object)
     return json_object
 
+
 if __name__ == "__main__":
-    data_json = collect_data()
-    
+    while(True):
+        configs = get_configs()
+        data_json = collect_data()
+        sent = send_data(controller_url=configs["controller_url"], json_object=data_json)
+        
+        sleep(configs["sleep_time"])
