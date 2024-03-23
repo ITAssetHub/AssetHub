@@ -5,18 +5,26 @@ from time import sleep
 import json
 import requests
 import tomllib
+import logging
+from logging.handlers import RotatingFileHandler
+
+rfh = RotatingFileHandler(filename='inventory_agent.log', mode='a',maxBytes=5242880, backupCount=1, encoding=None, delay=0)
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] - %(message)s", handlers=[rfh])
 
 def get_configs():     # Coleta dados de configuração do agente (sujeito a mudanças)
     with open("config.toml", "rb") as f:
         data = tomllib.load(f)
+    logging.info(f"config.toml lido com sucesso! configs={data}")
     return data
 
 #### HTTP POST #####
 def send_data(json_object, controller_url):
     try:
         response = requests.post(controller_url, json=json_object)
+        logging.info(response)
         return response.status_code
     except Exception as e:
+        logging.error(e)
         return e
     
 #### DATA COLLECTION ######
@@ -145,15 +153,21 @@ def collect_data():
     }
 
     json_object = json.dumps(x)
-    #with open("sample1.json", "w") as outfile:
-    #    outfile.write(json_object)
+    logging.debug(f"Dados coletados={json_object}")
     return json_object
 
 
 if __name__ == "__main__":
+    logging.info("Starting inventory_agent.py...")
     while(True):
-        configs = get_configs()
-        data_json = collect_data()
-        sent = send_data(controller_url=configs["controller_url"], json_object=data_json)
-        
-        sleep(configs["sleep_time"])
+        try:
+            configs = get_configs()
+            data_json = collect_data()
+            sent = send_data(controller_url=configs["controller_url"], json_object=data_json)
+            
+            logging.info(f'Sleeping for {configs["sleep_time"]} seconds...')
+            sleep(configs["sleep_time"])
+
+        except Exception as e: # Em caso de erro não documentado
+            logging.error(e)
+
