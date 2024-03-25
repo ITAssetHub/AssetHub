@@ -1,0 +1,14 @@
+[Unit]
+Description=Agente de inventário ITAssetHub.
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/inventory_agent/inventory_agent.py
+WorkingDirectory=/opt/inventory_agent/
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target

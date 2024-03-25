@@ -1,0 +1,4 @@
+# Arquivo de configuração para inventory_agent.py (Linux)
+
+controller_url = "http://localhost:6969"
+sleep_time = 300   # 5 Minutos
