@@ -25,13 +25,11 @@ CREATE TABLE IF NOT EXISTS `tb_ambiente` (
   `ambiente` TEXT(45) NOT NULL,
   `description` VARCHAR(45) NULL,
   PRIMARY KEY (`ambiente`))
-ENGINE = InnoDB;
-
 
 -- -----------------------------------------------------
 -- Table `mydb`.`tb_orgs`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `mydb`.`tb_orgs` (
+CREATE TABLE IF NOT EXISTS `tb_orgs` (
   `organization` TEXT(45) NOT NULL,
   `description` VARCHAR(45) NULL,
   PRIMARY KEY (`organization`))
@@ -41,7 +39,7 @@ CREATE TABLE IF NOT EXISTS `mydb`.`tb_orgs` (
 -- -----------------------------------------------------
 -- Table `mydb`.`tb_hardware`
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `mydb`.`tb_hardware` (
+CREATE TABLE IF NOT EXISTS `tb_hardware` (
   `hardware` TEXT(45) NOT NULL,
   `description` VARCHAR(45) NULL,
   PRIMARY KEY (`hardware`))
@@ -65,11 +63,11 @@ CREATE TABLE IF NOT EXISTS `tb_host` (
   INDEX `fk_tb_host_tb_hardware1_idx` (`tb_hardware_hardware` ASC) VISIBLE,
   CONSTRAINT `fk_tb_host_tb_ambiente1`
     FOREIGN KEY (`tb_ambiente_ambiente`)
-    REFERENCES `mydb`.`tb_ambiente` (`ambiente`),
+    REFERENCES `db_asset_hub`.`tb_ambiente` (`ambiente`),
   CONSTRAINT `fk_tb_host_tb_orgs1`
     FOREIGN KEY (`tb_orgs_organization`)
-    REFERENCES `mydb`.`tb_orgs` (`organization`),
+    REFERENCES `db_asset_hub`.`tb_orgs` (`organization`),
   CONSTRAINT `fk_tb_host_tb_hardware1`
     FOREIGN KEY (`tb_hardware_hardware`)
-    REFERENCES `mydb`.`tb_hardware` (`hardware`))
+    REFERENCES `db_asset_hub`.`tb_hardware` (`hardware`))
 
