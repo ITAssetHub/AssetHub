@@ -7,6 +7,8 @@ import requests
 import tomllib
 import logging
 from logging.handlers import RotatingFileHandler
+import socket
+import threading
 
 rfh = RotatingFileHandler(filename='inventory_agent.log', mode='a',maxBytes=5242880, backupCount=1, encoding=None, delay=0)
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] - %(message)s", handlers=[rfh])
@@ -20,7 +22,7 @@ def get_configs():     # Coleta dados de configuração do agente (sujeito a mud
 #### HTTP POST #####
 def send_data(json_object, controller_url):
     try:
-        response = requests.post(controller_url, json=json_object)
+        response = requests.post(url=f"{controller_url}/hosts/post_host", json=json_object)
         logging.info(response)
         return response.status_code
     except Exception as e:
@@ -156,18 +158,29 @@ def collect_data():
     logging.debug(f"Dados coletados={json_object}")
     return json_object
 
+### LISTENER THREAD ###
 
+def listener():
+    try:
+        configs = get_configs()
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.connect((configs["controller_ip"], 8888))
+        logging.info(f"Escutando {configs['controller_ip']}:8888...")
+
+        while True:
+            command = client_socket.recv(1024).decode()
+
+            if command == "UPDATE":
+                logging.info(f"Comando recebido: {command}")
+                data_json = collect_data()
+                send_data(controller_url=configs["api_url"], json_object=data_json)
+            sleep(10)
+
+    except Exception as e: # Em caso de erro não documentado
+        logging.error(e)        
+                
+            
 if __name__ == "__main__":
     logging.info("Starting inventory_agent.py...")
-    while(True):
-        try:
-            configs = get_configs()
-            data_json = collect_data()
-            sent = send_data(controller_url=configs["controller_url"], json_object=data_json)
-            
-            logging.info(f'Sleeping for {configs["sleep_time"]} seconds...')
-            sleep(configs["sleep_time"])
-
-        except Exception as e: # Em caso de erro não documentado
-            logging.error(e)
-
+    listener = threading.Thread(target=listener(), daemon=True)
+    listener.start()
