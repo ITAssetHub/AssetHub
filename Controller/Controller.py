@@ -51,10 +51,8 @@ def select_all_hosts():
         conexao = create_connection()
         cursor = conexao.cursor()
         sql = "SELECT * FROM tb_host;"
-        print("SQL:", sql)  # Debug
         cursor.execute(sql)
         regs = cursor.fetchall()
-        print("Número de registros encontrados:", len(regs))  # Debug
         return regs
     finally:
         cursor.close()
@@ -224,3 +222,5 @@ async def all_hosts(token: str = Depends(verify_token)):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=6969)
+    
+    
