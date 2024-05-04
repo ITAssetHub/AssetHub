@@ -1,5 +1,7 @@
 # AssetHub
 
+## Controller Dependencies
+
 ## Agent Dependencies
 RHEL 9
   Dependências:
