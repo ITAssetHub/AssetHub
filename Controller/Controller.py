@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 import mysql.connector
 import jwt
-from jwt.exceptions import InvalidSignatureError
+from jwt.exceptions import InvalidSignatureError, ExpiredSignatureError
 from datetime import datetime, timedelta, timezone
 import hashlib
 
@@ -18,7 +18,7 @@ ALGORITHM = "HS256"
 # MySQL Connection comands
 
 def create_connection():
-    conexao = mysql.connector.connect(host='0.0.0.0',
+    conexao = mysql.connector.connect(host='54.241.121.31',
                                      user='asset_hub_db_user',
                                      password='AssetHubDB2024',
                                      database='db_asset_hub')
@@ -58,7 +58,6 @@ def select_all_hosts():
         cursor.close()
         conexao.close()
 
-
 def select_host(hostname):
     conexao = create_connection()
     cursor = conexao.cursor()
@@ -70,6 +69,18 @@ def select_host(hostname):
         return None
     
     return regs[0]
+
+def select_all_hardware():
+    try:
+        conexao = create_connection()
+        cursor = conexao.cursor()
+        sql = "SELECT * FROM tb_hardware;"
+        cursor.execute(sql)
+        regs = cursor.fetchall()
+        return regs
+    finally:
+        cursor.close()
+        conexao.close()
 
 ###############
 #  Controller #
@@ -95,7 +106,7 @@ async def post_host(request: Request):
 #######
 
 # Internal API
-    ## User requests:
+## User requests:
 
 async def authenticate_user(username: str, password: str):
 
@@ -127,7 +138,12 @@ def verify_token(token: str = Depends(OAuth2PasswordBearer(tokenUrl="token"))):
             detail="Token inválido ou expirado",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token inválido ou expirado",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 @app.post("/token")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -151,6 +167,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
     ## Servers requests:
 
+
+## Server requests
 @app.get("/hosts/get_host/{hostname}")
 async def get_host(hostname: str, token: str = Depends(verify_token)):
     host = select_host(hostname)
@@ -158,22 +176,33 @@ async def get_host(hostname: str, token: str = Depends(verify_token)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Host não encontrado")
     return {"message": host}
 
-@app.get("/hosts/get_all_hosts")
+@app.get("/hosts/get_hosts")
 async def all_hosts(token: str = Depends(verify_token)):
     hosts = select_all_hosts()
     if len(hosts) == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Hosts não encontrados")
     return {"message": hosts}
+
+@app.get("/hosts/get_hosts_count")
+async def get_hosts_count(token: str = Depends(verify_token)):
+    hosts = select_all_hosts()
+    return {"message": len(hosts)}
     
-    ## Orgs requests:
-    ## Hardware requests:
-    ## Ambiente requests: 
-    ## Site/Datacenter requests:
+## Orgs requests:
+## Hardware requests:
+@app.get("/hardware/get_hardware_count")
+async def get_hardware_count(token: str = Depends(verify_token)):
+    hardwares = select_all_hardware()
+    return {"message": len(hardwares)}
+
+## Ambiente requests: 
+## Site/Datacenter requests:
 
 
 
 #Enpoints
 #   # Servers
+#       GET inventory_agent.py
 #       POST Hosts --- Feito  (External)
 #       GET Host   --- Feito  
 #       GET Hosts  --- Feito
@@ -218,9 +247,14 @@ async def all_hosts(token: str = Depends(verify_token)):
 #   /token
 #   /hosts/get_host/{hostname}
 #   /hosts/get_all_hosts
+#   /hosts/get_hosts_count
+#   /hardware/get_hardware_count
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=6969)
+    
+
+
     
     
