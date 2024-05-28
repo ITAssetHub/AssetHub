@@ -5,6 +5,7 @@
 import json
 from fastapi import FastAPI, Request, HTTPException, status, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.middleware.cors import CORSMiddleware
 import mysql.connector
 import jwt
 from jwt.exceptions import InvalidSignatureError, ExpiredSignatureError
