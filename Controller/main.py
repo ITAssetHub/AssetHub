@@ -93,6 +93,13 @@ def select_all_hardware():
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permitir qualquer origem
+    allow_credentials=True,
+    allow_methods=["*"],  # Permitir todos os métodos HTTP (GET, POST, etc.)
+    allow_headers=["*"],  # Permitir todos os cabeçalhos
+)
 
 # External API!
 @app.post("/hosts/post_host")
