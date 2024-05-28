@@ -102,7 +102,7 @@ app.add_middleware(
     allow_headers=["*"],  # Permitir todos os cabeçalhos
 )
 
-# External API!
+# External API!   VAI MIGRAR PARA OUTRO SCRIPT!
 @app.post("/hosts/post_host")
 async def post_host(request: Request):
     data = await request.json()
