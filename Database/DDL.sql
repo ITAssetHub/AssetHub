@@ -11,21 +11,20 @@ GRANT ALL PRIVILEGES ON `db_asset_hub`.* TO 'asset_hub_db_user'@'%';
 CREATE TABLE IF NOT EXISTS `db_asset_hub`.`tb_passwd` (
   `username` VARCHAR(25) NOT NULL,
   `name` VARCHAR(100) NULL,
-  `user_hash` VARCHAR(400) NOT NULL,
+  `user_hash` VARCHAR(200) NOT NULL,
   `enabled` TINYINT NOT NULL,
   PRIMARY KEY (`username`));
+
 
 CREATE TABLE IF NOT EXISTS `db_asset_hub`.`tb_ambiente` (
   `ambiente` VARCHAR(45) NOT NULL,
   `description` VARCHAR(240) NULL,
   PRIMARY KEY (`ambiente`));
 
-
 CREATE TABLE IF NOT EXISTS `db_asset_hub`.`tb_orgs` (
   `organization` VARCHAR(45) NOT NULL,
   `description` VARCHAR(240) NULL,
   PRIMARY KEY (`organization`));
-
 
 CREATE TABLE IF NOT EXISTS `db_asset_hub`.`tb_hardware` (
   `hardware` VARCHAR(45) NOT NULL,
@@ -33,7 +32,7 @@ CREATE TABLE IF NOT EXISTS `db_asset_hub`.`tb_hardware` (
   PRIMARY KEY (`hardware`));
 
 CREATE TABLE IF NOT EXISTS `db_asset_hub`.`tb_site` (
-  `site` INT NOT NULL,
+  `site` VARCHAR(45) NOT NULL,
   `description` VARCHAR(240) NULL,
   PRIMARY KEY (`site`));
 
@@ -44,7 +43,7 @@ CREATE TABLE IF NOT EXISTS `db_asset_hub`.`tb_host` (
   `tb_ambiente_ambiente` VARCHAR(45) NULL,
   `tb_orgs_organization` VARCHAR(45) NULL,
   `tb_hardware_hardware` VARCHAR(45) NULL,
-  `tb_site_site` INT NULL,
+  `tb_site_site` VARCHAR(45) NULL,
   `old_data1` JSON NULL,
   `old_data2` JSON NULL,
   `old_data3` JSON NULL,
@@ -56,21 +55,13 @@ CREATE TABLE IF NOT EXISTS `db_asset_hub`.`tb_host` (
   INDEX `fk_tb_host_tb_site1_idx` (`tb_site_site` ASC) VISIBLE,
   CONSTRAINT `fk_tb_host_tb_ambiente1`
     FOREIGN KEY (`tb_ambiente_ambiente`)
-    REFERENCES `db_asset_hub`.`tb_ambiente` (`ambiente`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
+    REFERENCES `db_asset_hub`.`tb_ambiente` (`ambiente`),
   CONSTRAINT `fk_tb_host_tb_orgs1`
     FOREIGN KEY (`tb_orgs_organization`)
-    REFERENCES `db_asset_hub`.`tb_orgs` (`organization`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
+    REFERENCES `db_asset_hub`.`tb_orgs` (`organization`),
   CONSTRAINT `fk_tb_host_tb_hardware1`
     FOREIGN KEY (`tb_hardware_hardware`)
-    REFERENCES `db_asset_hub`.`tb_hardware` (`hardware`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
+    REFERENCES `db_asset_hub`.`tb_hardware` (`hardware`),
   CONSTRAINT `fk_tb_host_tb_site1`
     FOREIGN KEY (`tb_site_site`)
-    REFERENCES `db_asset_hub`.`tb_site` (`site`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION);
+    REFERENCES `db_asset_hub`.`tb_site` (`site`));
