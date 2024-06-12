@@ -1,0 +1,14 @@
+[Unit]
+Description=AssetHub Service executable.
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3.11 /opt/asset_hub/main.py
+WorkingDirectory=/opt/asset_hub/
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
