@@ -3,7 +3,7 @@ Description=Agente de inventário ITAssetHub.
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /opt/inventory_agent/inventory_agent.py
+ExecStart=/usr/bin/python3.11 /opt/inventory_agent/inventory_agent.py
 WorkingDirectory=/opt/inventory_agent/
 StandardOutput=inherit
 StandardError=inherit
