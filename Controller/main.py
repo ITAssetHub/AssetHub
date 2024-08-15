@@ -94,13 +94,13 @@ def select_all_hardware():
 
 app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Permitir qualquer origem
-    allow_credentials=True,
-    allow_methods=["*"],  # Permitir todos os métodos HTTP (GET, POST, etc.)
-    allow_headers=["*"],  # Permitir todos os cabeçalhos
-)
+#app.add_middleware(
+#    CORSMiddleware,
+#    allow_origins=["*"],  # Permitir qualquer origem
+#    allow_credentials=True,
+#    allow_methods=["*"],  # Permitir todos os métodos HTTP (GET, POST, etc.)
+#    allow_headers=["*"],  # Permitir todos os cabeçalhos
+#)
 
 # External API!   VAI MIGRAR PARA OUTRO SCRIPT!
 @app.post("/hosts/post_host")
@@ -175,31 +175,31 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
     ## Servers requests:
 
-
+#token: str = Depends(verify_token)
 ## Server requests
 @app.get("/hosts/get_host/{hostname}")
-async def get_host(hostname: str, token: str = Depends(verify_token)):
+async def get_host(hostname: str):
     host = select_host(hostname)
     if host == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Host não encontrado")
     return {"message": host}
 
 @app.get("/hosts/get_hosts")
-async def all_hosts(token: str = Depends(verify_token)):
+async def all_hosts():
     hosts = select_all_hosts()
     if len(hosts) == 0:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Hosts não encontrados")
     return {"message": hosts}
 
 @app.get("/hosts/get_hosts_count")
-async def get_hosts_count(token: str = Depends(verify_token)):
+async def get_hosts_count():
     hosts = select_all_hosts()
     return {"message": len(hosts)}
     
 ## Orgs requests:
 ## Hardware requests:
 @app.get("/hardware/get_hardware_count")
-async def get_hardware_count(token: str = Depends(verify_token)):
+async def get_hardware_count():
     hardwares = select_all_hardware()
     return {"message": len(hardwares)}
 
