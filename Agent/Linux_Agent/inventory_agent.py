@@ -7,9 +7,17 @@ import requests
 import tomllib
 import logging
 from logging.handlers import RotatingFileHandler
+from multiprocessing import Process
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 import socket
-import threading
+from random import randint
+import uuid
+import os
 
+
+# tamanho máximo de log = 5 MB
 rfh = RotatingFileHandler(filename='inventory_agent.log', mode='a',maxBytes=5242880, backupCount=1, encoding=None, delay=0)
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] - %(message)s", handlers=[rfh])
 
@@ -18,6 +26,21 @@ def get_configs():     # Coleta dados de configuração do agente (sujeito a mud
         data = tomllib.load(f)
     logging.info(f"config.toml lido com sucesso! configs={data}")
     return data
+
+def get_or_create_uuid():
+    # Verifica se o UUID já foi gerado e salvo
+    filename = "uuid.txt"
+    if os.path.exists(filename):
+        with open(filename, 'r') as f:
+            return f.read().strip()
+    
+    # Gera um novo UUID e salva no arquivo
+    unique_id = str(uuid.uuid4())
+    with open(filename, 'w') as f:
+        f.write(unique_id)
+    
+    return unique_id
+
 
 #### HTTP POST #####
 def send_data(json_object, controller_url):
@@ -91,6 +114,7 @@ def network_info(): # network data gatherer
     return net_interfaces
 
 def collect_data():
+    agent_uuid = get_or_create_uuid()
     uname = platform.uname()                          # system info
     info = platform.freedesktop_os_release()          # linux only!!! (more system info)
     boot_time_timestamp = psutil.boot_time()          # uptime (boot time)
@@ -104,6 +128,7 @@ def collect_data():
     net_io = psutil.net_io_counters()                 # network IO statistics since boot
 
     x = {
+        "uuid": agent_uuid,
         "systemInfo": {
             "hostname": uname.node,
             "OS_Name": info["NAME"],
@@ -113,15 +138,8 @@ def collect_data():
             "OS_Type": uname.system,
             "arch": uname.machine
         },
-        "date": {
-            "day": datetime.now().day,
-            "month": datetime.now().month,
-            "year": datetime.now().year,
-            "hour": datetime.now().hour,
-            "minutes": datetime.now().minute,
-            "seconds": datetime.now().second,
-        },
-        "bootTime": f"{bt.year}/{bt.month}/{bt.day} {bt.hour}:{bt.minute}:{bt.second}",
+        "date": f"{datetime.now().year}-{datetime.now().month:02d}-{datetime.now().day:02d} {datetime.now().hour:02d}:{datetime.now().minute:02d}:{datetime.now().second:02d}",
+        "bootTime": f"{bt.year}-{bt.month}-{bt.day} {bt.hour}:{bt.minute}:{bt.second}",
         "cpuInfo": {
             "physicalCores": psutil.cpu_count(logical=False),
             "logicalCores": psutil.cpu_count(logical=True),
@@ -154,33 +172,53 @@ def collect_data():
         }
     }
 
-    json_object = json.dumps(x)
+    json_object = json.dumps(x, indent=4)
     logging.debug(f"Dados coletados={json_object}")
     return json_object
 
-### LISTENER THREAD ###
-
-def listener():
+# Essa função é engraçada... não estou fazendo conexão alguma, só estou usando o protocolo UDP
+# para simular uma conexão e pegar o "IP principal" da máquina agente, ou seja, o IP
+# que consegue se conectar ao controlador.
+def get_main_ip(controller_ip):
+    # Conecta-se ao IP da máquina controladora para determinar o IP da interface ativa
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        configs = get_configs()
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.connect((configs["controller_ip"], 8888))
-        logging.info(f"Escutando {configs['controller_ip']}:8888...")
+        # Se conecta ao IP da máquina controladora, SEM ENVIAR PACOTES
+        s.connect((controller_ip, 80))
+        ip_address = s.getsockname()[0]
+    finally:
+        s.close()
+        return ip_address
+    
 
-        while True:
-            command = client_socket.recv(1024).decode()
+### API PARA RECEBER COMANDOS ###
 
-            if command == "UPDATE":
-                logging.info(f"Comando recebido: {command}")
-                data_json = collect_data()
-                send_data(controller_url=configs["api_url"], json_object=data_json)
-            sleep(10)
+api = FastAPI()
 
-    except Exception as e: # Em caso de erro não documentado
-        logging.error(e)        
-                
-            
+
+@api.get("/update")
+def update():
+    configs = get_configs()
+    data_json = collect_data()
+    send_data(controller_url=configs["api_url"], json_object=data_json)
+
+# Isso aqui é uma medida para caso o Controller caia, demora para ser executado
+# irá rodar em outra Thread
+#def failsafe():
+#    while(True):
+#        # Evita com que sejam enviadas muitas requisições simultâneas.
+#        sleep(randint(1200, 2100)) #20 - 35 min
+#        update()
+
+
 if __name__ == "__main__":
     logging.info("Starting inventory_agent.py...")
-    listener = threading.Thread(target=listener(), daemon=True)
-    listener.start()
+    configs = get_configs()
+
+    # Primeiro envio de dados e cadastro no Controller
+    data_json = collect_data()
+    send_data(controller_url=configs["api_url"], json_object=data_json)
+    
+    # Pega endereço da interface principal da máquina e sobe api
+    main_ip = get_main_ip(controller_ip=configs['controller_ip'])
+    uvicorn.run(api, host=main_ip, port=8888)
