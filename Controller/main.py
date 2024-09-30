@@ -54,6 +54,7 @@ def insert_host(data, addr):
             INSERT INTO tb_host (uuid, hostname, data, last_report_date, os_name, os_pretty_name, os_release, kernel_release, os_type, architecture, boot_time, total_bytes_sent, total_bytes_recv, disk_total_read, disk_total_write)
             VALUES ('{data_dict['uuid']}', '{data_dict['systemInfo']['hostname']}', '{data}', '{data_dict['date']}', '{data_dict['systemInfo']['OS_Name']}', '{data_dict['systemInfo']['OS_Pretty_Name']}', '{data_dict['systemInfo']['OS_Release']}', '{data_dict['systemInfo']['kernelRelease']}', '{data_dict['systemInfo']['OS_Type']}', '{data_dict['systemInfo']['arch']}', '{data_dict['bootTime']}', '{data_dict['networkInfo']['totalBytesSent']}', '{data_dict['networkInfo']['totalBytesRecv']}', '{data_dict['diskInfo']['totalRead']}', '{data_dict['diskInfo']['totalWrite']}')
             """
+        print(sql_host)
 
         sql_cpu = f"""
             INSERT INTO tb_cpu (host_uuid, physical_cores, logical_cores, minFrequency, maxFrequency, current_frequency, total_cpu_usage_percent)
@@ -77,10 +78,16 @@ def insert_host(data, addr):
         
         devices = data_dict["diskInfo"]["devices"]
         for device_name, device_info in devices.items():
-            sql_disk = f"""
-                INSERT INTO tb_disk_partition (host_uuid, device, mountpoint, filesystem, disk_total_size, disk_used_size, disk_free_size, disk_usage_percent)
-                VALUES ('{data_dict['uuid']}', '{device_name}', '{device_info['mountpoint']}', '{device_info['filesystem']}', '{device_info['totalSize']}', '{device_info['usedSize']}','{device_info['freeSize']}', {device_info['usagePercent']})
-            """
+            if data_dict['systemInfo']['OS_Type'] == "Windows":
+                sql_disk = f"""
+                    INSERT INTO tb_disk_partition (host_uuid, device, mountpoint, filesystem, disk_total_size, disk_used_size, disk_free_size, disk_usage_percent)
+                    VALUES ('{data_dict['uuid']}', '{device_name}\\', '{device_info['mountpoint']}\\', '{device_info['filesystem']}', '{device_info['totalSize']}', '{device_info['usedSize']}','{device_info['freeSize']}', {device_info['usagePercent']})
+                """
+            elif data_dict['systemInfo']['OS_Type'] == "Linux":
+                sql_disk = f"""
+                    INSERT INTO tb_disk_partition (host_uuid, device, mountpoint, filesystem, disk_total_size, disk_used_size, disk_free_size, disk_usage_percent)
+                    VALUES ('{data_dict['uuid']}', '{device_name}', '{device_info['mountpoint']}', '{device_info['filesystem']}', '{device_info['totalSize']}', '{device_info['usedSize']}','{device_info['freeSize']}', {device_info['usagePercent']})
+                """
             cursor.execute(sql_disk)
 
         interfaces = data_dict["networkInfo"]["interfaces"]
@@ -211,10 +218,17 @@ def insert_host(data, addr):
 
         devices = data_dict["diskInfo"]["devices"]
         for device_name, device_info in devices.items():
-            sql_disk = f"""
-                INSERT INTO tb_disk_partition (host_uuid, device, mountpoint, filesystem, disk_total_size, disk_used_size, disk_free_size, disk_usage_percent)
-                VALUES ('{data_dict['uuid']}', '{device_name}', '{device_info['mountpoint']}', '{device_info['filesystem']}', '{device_info['totalSize']}', '{device_info['usedSize']}','{device_info['freeSize']}', {device_info['usagePercent']})
-            """
+            if data_dict['systemInfo']['OS_Type'] == "Windows":
+                sql_disk = f"""
+                    INSERT INTO tb_disk_partition (host_uuid, device, mountpoint, filesystem, disk_total_size, disk_used_size, disk_free_size, disk_usage_percent)
+                    VALUES ('{data_dict['uuid']}', '{device_name}\\', '{device_info['mountpoint']}\\', '{device_info['filesystem']}', '{device_info['totalSize']}', '{device_info['usedSize']}','{device_info['freeSize']}', {device_info['usagePercent']})
+                """
+            elif data_dict['systemInfo']['OS_Type'] == "Linux":
+                sql_disk = f"""
+                    INSERT INTO tb_disk_partition (host_uuid, device, mountpoint, filesystem, disk_total_size, disk_used_size, disk_free_size, disk_usage_percent)
+                    VALUES ('{data_dict['uuid']}', '{device_name}', '{device_info['mountpoint']}', '{device_info['filesystem']}', '{device_info['totalSize']}', '{device_info['usedSize']}','{device_info['freeSize']}', {device_info['usagePercent']})
+                """
+            cursor.execute(sql_disk)
             cursor.execute(sql_disk)
         conexao.commit()
 
@@ -723,3 +737,4 @@ if __name__ == "__main__":
     
     uvicorn.run(app, host="0.0.0.0", port=6969)
     upd.join()
+    
