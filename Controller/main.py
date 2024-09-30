@@ -1,5 +1,5 @@
 import json
-from fastapi import FastAPI, Request, HTTPException, status, Depends
+from fastapi import FastAPI, Request, HTTPException, status, Depends, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 import mysql.connector
@@ -340,10 +340,10 @@ def select_all_hosts():
         column_names = [column[0] for column in cursor.description]
         rows = cursor.fetchall()
         result = [dict(zip(column_names, row)) for row in rows]
-        json_result = json.dumps(result, default=custom_json_handler, indent=4)
-        print(json_result)
+        
+        print(result)
 
-        return json_result
+        return result
     finally:
         cursor.close()
         conexao.close()
@@ -437,7 +437,7 @@ def select_host(uuid):
             "NETWORK_INTERFACES": net_interfaces,
             }
 
-        json_result = json.dumps(final_result, default=custom_json_handler, indent=4)
+        json_result = final_result
         
         print(json_result)
         if len(regs) == 0:
@@ -610,9 +610,35 @@ async def get_host(uuid: str):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Host não encontrado")
     return {"Host": host}
 
+@app.put("/hosts/update_host_description/{uuid}")
+async def update_description(uuid: str, new_description: str):  # isso aqui passa vibes de SQL injection...
+    try: 
+        conexao = create_connection()
+        cursor = conexao.cursor()
+        sql_update_descrip = f"""
+            UPDATE tb_host
+            SET
+                description = '{new_description}'
+            WHERE
+                `uuid` = '{uuid}';
+        """
+        cursor.execute(sql_update_descrip)
+        conexao.commit()
+        return Response(status_code=200)
+    except Exception as e:
+        print(e)
+        return {"ERROR": "Failed to update host description"}, status.HTTP_500_INTERNAL_SERVER_ERROR
+    finally:
+        cursor.close()
+        conexao.close()
+
 @app.get("/hosts/get_host_interfaces/{uuid}")
+async def interfaces():
+    pass
 
 @app.get("/hosts/disks")
+async def disks():
+    pass
 
 @app.delete("/hosts/delete_host/{hostname}") # TERMINE ISSO!!!!!
 async def delete_host(hostname: str):
