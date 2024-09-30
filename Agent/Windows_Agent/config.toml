@@ -1,0 +1,4 @@
+# Arquivo de configuração para inventory_agent.py (Windows)
+
+api_url = "http://172.17.206.232:6969"
+controller_ip = "172.17.206.232"
