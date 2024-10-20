@@ -138,6 +138,9 @@ def insert_host(data, addr):
         
 
         hist = [float(x) if isinstance(x, Decimal) else x for x in hist]
+        if len(hist) > 24:
+            hist = hist[-24:]
+     
         updated_history_json = json.dumps(hist)
         query_update = f"""
             UPDATE `db_asset_hub`.`tb_cpu`
@@ -178,6 +181,9 @@ def insert_host(data, addr):
             hist.append(mem_percent)
 
         hist = [float(x) if isinstance(x, Decimal) else x for x in hist]
+        if len(hist) > 24:
+            hist = hist[-24:]
+     
         updated_history_json = json.dumps(hist)
         query_update = f"""
             UPDATE tb_memory
@@ -299,13 +305,19 @@ def insert_host(data, addr):
 
         if network_history is None:
             network_history = [[total_bytes_sent, total_bytes_recv]]
-        if disk_history is None:
-            disk_history = [[disk_total_read, disk_total_write]]
         else:
             network_history = json.loads(network_history)
             network_history.append([total_bytes_sent, total_bytes_recv])
+            if len(network_history) > 24:
+                network_history = network_history[-24:]
+
+        if disk_history is None:
+            disk_history = [[disk_total_read, disk_total_write]]
+        else:
             disk_history = json.loads(disk_history)
             disk_history.append([disk_total_read, disk_total_write])
+            if len(disk_history) > 24:
+                disk_history = disk_history[-24:]
 
         data = json.dumps(data)
         disk_history = json.dumps(disk_history)
