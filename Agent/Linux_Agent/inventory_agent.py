@@ -126,6 +126,7 @@ def collect_data():
     disk_io = psutil.disk_io_counters()               # disk IO statistics since boot
     net_interfaces = network_info()                   # network interfaces
     net_io = psutil.net_io_counters()                 # network IO statistics since boot
+    main_ip = get_main_ip(controller_ip=configs['controller_ip'])
 
     x = {
         "uuid": agent_uuid,
@@ -136,7 +137,8 @@ def collect_data():
             "OS_Release": info["VERSION_ID"],
             "kernelRelease": uname.release,
             "OS_Type": uname.system,
-            "arch": uname.machine
+            "arch": uname.machine,
+            "ip": main_ip,
         },
         "date": f"{datetime.now().year}-{datetime.now().month:02d}-{datetime.now().day:02d} {datetime.now().hour:02d}:{datetime.now().minute:02d}:{datetime.now().second:02d}",
         "bootTime": f"{bt.year}-{bt.month}-{bt.day} {bt.hour}:{bt.minute}:{bt.second}",
@@ -194,7 +196,6 @@ def get_main_ip(controller_ip):
 ### API PARA RECEBER COMANDOS ###
 
 api = FastAPI()
-
 
 @api.get("/update")
 def update():
