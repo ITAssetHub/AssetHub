@@ -1,15 +1,12 @@
 import psutil
 import platform
 from datetime import datetime
-from time import sleep
 import json
 import requests
 import tomllib
 import logging
 from logging.handlers import RotatingFileHandler
-from multiprocessing import Process
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI
 import uvicorn
 import socket
 from random import randint
