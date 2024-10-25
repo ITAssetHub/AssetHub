@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS `db_asset_hub`.`tb_host` (
   `uuid` VARCHAR(45) NOT NULL,
   `hostname` VARCHAR(45) NULL DEFAULT NULL,
   `data` JSON NOT NULL,
+  `ipv4` VARCHAR(16) NULL DEFAULT NULL,
   `last_report_date` DATETIME NOT NULL,
   `description` VARCHAR(240) NULL DEFAULT NULL,
   `ambiente` VARCHAR(45) NULL DEFAULT NULL,

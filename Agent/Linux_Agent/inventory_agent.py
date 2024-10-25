@@ -9,7 +9,6 @@ from logging.handlers import RotatingFileHandler
 from fastapi import FastAPI
 import uvicorn
 import socket
-from random import randint
 import uuid
 import os
 
@@ -135,7 +134,7 @@ def collect_data():
             "kernelRelease": uname.release,
             "OS_Type": uname.system,
             "arch": uname.machine,
-            "ip": main_ip,
+            "ipv4": main_ip,
         },
         "date": f"{datetime.now().year}-{datetime.now().month:02d}-{datetime.now().day:02d} {datetime.now().hour:02d}:{datetime.now().minute:02d}:{datetime.now().second:02d}",
         "bootTime": f"{bt.year}-{bt.month}-{bt.day} {bt.hour}:{bt.minute}:{bt.second}",

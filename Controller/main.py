@@ -4,13 +4,11 @@ from fastapi import FastAPI, Request, HTTPException, status, Depends, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 import mysql.connector
-from mysql.connector import errors
 import jwt
 from jwt.exceptions import InvalidSignatureError, ExpiredSignatureError
 from datetime import datetime, timedelta, timezone
 import hashlib
 from multiprocessing import Process, Manager
-import socket
 import tomllib
 import ast
 import requests
@@ -52,8 +50,8 @@ def insert_host(data, addr):
     if len(regs) == 0:
         # (uuid, hostname, data, last_report_date, os_name, os_pretty_name, kernel_release, os_type, architecture, boot_time, total_bytes_sent, total_bytes_recv, disk_total_read, disk_total_write)
         sql_host = f"""
-            INSERT INTO tb_host (uuid, hostname, data, last_report_date, os_name, os_pretty_name, os_release, kernel_release, os_type, architecture, boot_time, total_bytes_sent, total_bytes_recv, disk_total_read, disk_total_write)
-            VALUES ('{data_dict['uuid']}', '{data_dict['systemInfo']['hostname']}', '{data}', '{data_dict['date']}', '{data_dict['systemInfo']['OS_Name']}', '{data_dict['systemInfo']['OS_Pretty_Name']}', '{data_dict['systemInfo']['OS_Release']}', '{data_dict['systemInfo']['kernelRelease']}', '{data_dict['systemInfo']['OS_Type']}', '{data_dict['systemInfo']['arch']}', '{data_dict['bootTime']}', '{data_dict['networkInfo']['totalBytesSent']}', '{data_dict['networkInfo']['totalBytesRecv']}', '{data_dict['diskInfo']['totalRead']}', '{data_dict['diskInfo']['totalWrite']}')
+            INSERT INTO tb_host (uuid, hostname, data, ipv4, last_report_date, os_name, os_pretty_name, os_release, kernel_release, os_type, architecture, boot_time, total_bytes_sent, total_bytes_recv, disk_total_read, disk_total_write)
+            VALUES ('{data_dict['uuid']}', '{data_dict['systemInfo']['hostname']}', '{data}', '{data_dict['systemInfo']['ipv4']}', '{data_dict['date']}', '{data_dict['systemInfo']['OS_Name']}', '{data_dict['systemInfo']['OS_Pretty_Name']}', '{data_dict['systemInfo']['OS_Release']}', '{data_dict['systemInfo']['kernelRelease']}', '{data_dict['systemInfo']['OS_Type']}', '{data_dict['systemInfo']['arch']}', '{data_dict['bootTime']}', '{data_dict['networkInfo']['totalBytesSent']}', '{data_dict['networkInfo']['totalBytesRecv']}', '{data_dict['diskInfo']['totalRead']}', '{data_dict['diskInfo']['totalWrite']}')
             """
         print(sql_host)
 
@@ -329,6 +327,7 @@ def insert_host(data, addr):
             SET 
                 hostname = '{data_dict['systemInfo']['hostname']}',
                 data = '{data}',
+                ipv4 = '{data_dict['systemInfo']['ipv4']}',
                 last_report_date = '{data_dict['date']}',
                 os_name = '{data_dict['systemInfo']['OS_Name']}',
                 os_pretty_name = '{data_dict['systemInfo']['OS_Pretty_Name']}',
@@ -392,7 +391,7 @@ def select_host(uuid):
         conexao = create_connection()
         cursor = conexao.cursor()
 
-        sql = f"SELECT uuid, hostname, last_report_date, os_pretty_name, architecture, boot_time, description FROM tb_host WHERE uuid = '{uuid}';"
+        sql = f"SELECT uuid, hostname, ipv4, last_report_date, os_pretty_name, architecture, boot_time, description FROM tb_host WHERE uuid = '{uuid}';"
         cursor.execute(sql)
         column_names = [column[0] for column in cursor.description]
         regs = cursor.fetchall()
@@ -658,14 +657,6 @@ async def update_description(uuid: str, new_description: str):  # isso aqui pass
     finally:
         cursor.close()
         conexao.close()
-
-@app.get("/hosts/get_host_interfaces/{uuid}")
-async def interfaces():
-    pass
-
-@app.get("/hosts/disks")
-async def disks():
-    pass
 
 @app.delete("/hosts/delete_host/{hostname}") # TERMINE ISSO!!!!!
 async def delete_host(hostname: str):
