@@ -233,7 +233,7 @@ def insert_host(data, addr):
                     INSERT INTO tb_disk_partition (host_uuid, device, mountpoint, filesystem, disk_total_size, disk_used_size, disk_free_size, disk_usage_percent)
                     VALUES ('{data_dict['uuid']}', '{device_name}', '{device_info['mountpoint']}', '{device_info['filesystem']}', '{device_info['totalSize']}', '{device_info['usedSize']}','{device_info['freeSize']}', {device_info['usagePercent']})
                 """
-            cursor.execute(sql_disk)
+                
             cursor.execute(sql_disk)
         conexao.commit()
 
