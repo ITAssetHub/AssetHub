@@ -725,11 +725,12 @@ def get_conns():
     sql = "SELECT hosts FROM tb_host_list WHERE id = 1"
     cursor.execute(sql)
     hosts = cursor.fetchall()
-    hosts = json.loads(hosts[0][0])
-    for i in range(len(conns)):
-        conns.pop(0)
-    for host in hosts:
-        conns.append(host)
+    if len(hosts) > 0:
+        hosts = json.loads(hosts[0][0])
+        for i in range(len(conns)):
+            conns.pop(0)
+        for host in hosts:
+            conns.append(host)
 
 
 if __name__ == "__main__": 
