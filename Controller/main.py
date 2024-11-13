@@ -624,8 +624,48 @@ async def connects():
 
     return {"Conns": array}
 
+@app.get("/dashboard/cpu_info")
+async def cpu_info():   # IMPLEMENTAR APÓS ATUALIZAÇÃO DO BANCO!!!!
+    from random import randint
+    
+    # PLACEHOLDER
+    cpu_means = []
+    for i in range(0, 24):
+        cpu_means.append(float(randint(1, 97)))
 
-@app.post("/hosts/update")  # Porque isso não é um GET ou PATCH?????
+    critical_hosts = {
+        f"fakehost0{randint(1, 20)}": {
+            "cpu_usage": randint(90, 99),
+            "uuid": "fake-uuid-124313-12341234"
+            },
+        f"fakehost0{randint(1, 20)}": {
+            "cpu_usage": randint(90, 99),
+            "uuid": "fake-uuid-1243124-1243441"
+            }
+    }
+        
+    warning_hosts = {
+        f"fakehost0{randint(20, 40)}": {
+            "cpu_usage": randint(60, 89),
+            "uuid": "fake-uuid-12s313-123g1234"
+            },
+        f"fakehost0{randint(20, 40)}": {
+            "cpu_usage": randint(60, 89),
+            "uuid": "fake-uuid-1240124-124t441"
+            }
+    }
+
+    data = {
+        "CPU_MEAN": cpu_means,
+        "HOSTS":{
+            "CRITICAL HOSTS": critical_hosts,
+            "WARNING HOSTS": warning_hosts
+        }
+    }
+
+    return data
+
+@app.get("/hosts/update")
 async def update():
     broadcast_command(command="UPDATE")
 
@@ -698,7 +738,7 @@ async def get_hardware_count():
 def update_thread():
     while(True):
         sleep(300)
-        response = requests.post(url="http://127.0.0.1:6969/hosts/update")
+        response = requests.get(url="http://127.0.0.1:6969/hosts/update")
         print(response.status_code)
 
 def update_conns():
