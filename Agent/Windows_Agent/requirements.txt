@@ -1,5 +1,6 @@
-fastapi==0.115.0
+fastapi==0.115.5
 psutil==5.9.8
+psutil==6.1.0
 Requests==2.32.3
 uvicorn==0.15.0
-WMI==1.5.1
+wmi==1.5.1
