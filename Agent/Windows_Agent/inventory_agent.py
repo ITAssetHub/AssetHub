@@ -12,7 +12,7 @@ import uvicorn
 import socket
 import uuid
 import os
-
+import wmi
 
 # tamanho máximo de log = 5 MB
 rfh = RotatingFileHandler(filename='inventory_agent.log', mode='a',maxBytes=5242880, backupCount=1, encoding=None, delay=0)
@@ -110,6 +110,18 @@ def network_info(): # network data gatherer
         net_interfaces.update(dict_interface)
     return net_interfaces
 
+def get_hardware():
+    try:
+        c = wmi.WMI()
+        for system in c.Win32_ComputerSystem():
+            manufacturer = system.Manufacturer.strip()
+            product_name = system.Model.strip()
+    except:
+        manufacturer = platform.system()
+        product_name = platform.node()
+
+    return f"{manufacturer} {product_name}"
+
 def collect_data():
     agent_uuid = get_or_create_uuid()
     uname = platform.uname()       
@@ -122,17 +134,21 @@ def collect_data():
     disk_io = psutil.disk_io_counters()               # disk IO statistics since boot
     net_interfaces = network_info()                   # network interfaces
     net_io = psutil.net_io_counters()                 # network IO statistics since boot
+    main_ip = get_main_ip(controller_ip=configs['controller_ip'])
+    hardware = get_hardware()
 
     x = {
         "uuid": agent_uuid,
         "systemInfo": {
             "hostname": uname.node,
+            "hardware": hardware,
             "OS_Name": uname.system,
             "OS_Pretty_Name": f"{uname.system} {uname.release} {uname.version}",
             "OS_Release": uname.release,
             "kernelRelease": uname.version,
             "OS_Type": uname.system,
-            "arch": uname.machine
+            "arch": uname.machine,
+            "ipv4": main_ip,
         },
         "date": f"{datetime.now().year}-{datetime.now().month:02d}-{datetime.now().day:02d} {datetime.now().hour:02d}:{datetime.now().minute:02d}:{datetime.now().second:02d}",
         "bootTime": f"{bt.year}-{bt.month}-{bt.day} {bt.hour}:{bt.minute}:{bt.second}",

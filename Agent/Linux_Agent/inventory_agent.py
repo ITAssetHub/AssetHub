@@ -109,6 +109,20 @@ def network_info(): # network data gatherer
         net_interfaces.update(dict_interface)
     return net_interfaces
 
+def get_hardware():
+    try:
+        # Tenta obter o manufacturer e product_name usando arquivos do sistema
+        with open('/sys/devices/virtual/dmi/id/board_vendor', 'r') as f:
+            manufacturer = f.read().strip()
+        with open('/sys/devices/virtual/dmi/id/product_name', 'r') as f:
+            product_name = f.read().strip()
+    except FileNotFoundError:
+        # Informações não disponíveis no Linux sem dmidecode ou acesso a /sys
+        manufacturer = platform.node()
+        product_name = "N/A"
+
+    return f"{manufacturer} {product_name}"
+
 def collect_data():
     agent_uuid = get_or_create_uuid()
     uname = platform.uname()                          # system info
@@ -123,11 +137,13 @@ def collect_data():
     net_interfaces = network_info()                   # network interfaces
     net_io = psutil.net_io_counters()                 # network IO statistics since boot
     main_ip = get_main_ip(controller_ip=configs['controller_ip'])
+    hardware = get_hardware()
 
     x = {
         "uuid": agent_uuid,
         "systemInfo": {
             "hostname": uname.node,
+            "hardware": hardware,
             "OS_Name": info["NAME"],
             "OS_Pretty_Name": info["PRETTY_NAME"],
             "OS_Release": info["VERSION_ID"],
