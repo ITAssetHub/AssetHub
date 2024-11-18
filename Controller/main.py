@@ -138,6 +138,7 @@ def insert_host(data, addr):
         hist = [float(x) if isinstance(x, Decimal) else x for x in hist]
         if len(hist) > 24:
             hist = hist[-24:]
+        cpu_mean = sum(hist) / len(hist)
      
         updated_history_json = json.dumps(hist)
         query_update = f"""
@@ -149,7 +150,8 @@ def insert_host(data, addr):
                 `maxFrequency` = '{data_dict['cpuInfo']['maxFrequency']}', 
                 `current_frequency` = '{data_dict['cpuInfo']['currentFrequency']}', 
                 `total_cpu_usage_percent` = {data_dict['cpuInfo']['totalUsagePercent']},
-                `cpu_usage_percent_history` = '{updated_history_json}'
+                `cpu_usage_percent_history` = '{updated_history_json}',
+                `cpu_mean` = '{cpu_mean}'
             WHERE 
                 `host_uuid` = '{data_dict['uuid']}';
             """
@@ -181,6 +183,7 @@ def insert_host(data, addr):
         hist = [float(x) if isinstance(x, Decimal) else x for x in hist]
         if len(hist) > 24:
             hist = hist[-24:]
+        memory_mean = sum(hist) / len(hist)
      
         updated_history_json = json.dumps(hist)
         query_update = f"""
@@ -190,7 +193,8 @@ def insert_host(data, addr):
                 free_memory = '{data_dict['memoryInfo']['freeMem']}',
                 used_memory = '{data_dict['memoryInfo']['usedMem']}',
                 memory_usage_percent = {data_dict['memoryInfo']['usagePercent']},
-                memory_usage_percent_history = '{hist}'
+                memory_usage_percent_history = '{hist}',
+                memory_mean = '{memory_mean}'
             WHERE 
                 `host_uuid` = '{data_dict['uuid']}';
             """
@@ -736,10 +740,67 @@ async def get_hardware_count():
 
 
 def update_thread():
+    cicle = 300 # Ciclo de update 
+
+    current_cicle = 0
     while(True):
-        sleep(300)
+        if current_cicle == 12: # Após 12 ciclos, carregar médias do ambiente para dashboard
+            conexao = create_connection()
+            cursor = conexao.cursor()
+
+            hist_cpu_query = "SELECT cpu_mean_history FROM tb_dashboard WHERE id = 1"
+            cursor.execute(hist_cpu_query)
+            result = cursor.fetchall()
+            hist_cpu = result[0][0]
+
+            hist_memory_query = "SELECT memory_mean_history FROM tb_dashboard WHERE id = 1"
+            cursor.execute(hist_memory_query)
+            result = cursor.fetchall()
+            hist_memory = result[0][0]
+
+            cpu_mean_query = "SELECT SUM(cpu_mean) / COUNT(*) AS media FROM tb_cpu"
+            cursor.execute(cpu_mean_query)
+            result = cursor.fetchall()
+            cpu_mean = result[0][0]
+
+            memory_mean_query = "SELECT SUM(memory_mean) / COUNT(*) AS media FROM tb_memory"
+            cursor.execute(memory_mean_query)
+            result = cursor.fetchall()
+            memory_mean = result[0][0]
+
+            if hist_cpu == None:
+                hist_cpu = [cpu_mean]
+            else:
+                hist_cpu = json.loads(hist_cpu)
+                hist_cpu.append(cpu_mean)
+                hist_cpu = [float(x) if isinstance(x, Decimal) else x for x in hist_cpu]
+
+            if hist_memory == None:
+                hist_memory = [memory_mean]
+            else:
+                hist_memory = json.loads(hist_memory)
+                hist_memory.append(memory_mean)
+                hist_memory = [float(x) if isinstance(x, Decimal) else x for x in hist_memory]
+
+            update_dashboard = f"""
+                UPDATE tb_dashboard
+                SET 
+                    `cpu_mean_history` = '{hist_cpu}',
+                    `memory_mean_history` = '{hist_memory}'
+                WHERE
+                    id = 1
+            """
+            cursor.execute(update_dashboard)
+            conexao.commit()
+            cursor.close()
+            conexao.close()
+            current_cicle = 0 # RESET CICLE COUNTER
+
         response = requests.get(url="http://127.0.0.1:6969/hosts/update")
         print(response.status_code)
+
+        cicle += 1
+        sleep(cicle)
 
 def update_conns():
     conexao = create_connection()
