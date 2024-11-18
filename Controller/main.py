@@ -744,6 +744,7 @@ def update_thread():
 
     current_cicle = 0
     while(True):
+        sleep(cicle)
         if current_cicle == 12: # Após 12 ciclos, carregar médias do ambiente para dashboard
             conexao = create_connection()
             cursor = conexao.cursor()
@@ -800,7 +801,6 @@ def update_thread():
         print(response.status_code)
 
         cicle += 1
-        sleep(cicle)
 
 def update_conns():
     conexao = create_connection()
