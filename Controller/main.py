@@ -134,7 +134,6 @@ def insert_host(data, addr):
             hist = json.loads(cpu_history)
             hist.append(cpu_percent)
         
-
         hist = [float(x) if isinstance(x, Decimal) else x for x in hist]
         if len(hist) > 24:
             hist = hist[-24:]
@@ -502,6 +501,73 @@ def select_all_hosts_by_os(os_type):
         cursor.close()
         conexao.close()
 
+def select_dashboard_means():
+    try:
+        conexao = create_connection()
+        cursor = conexao.cursor()
+        
+        query = "SELECT cpu_mean_history, memory_mean_history FROM tb_dashboard"
+        cursor.execute(query)
+        regs = cursor.fetchone()
+        cpu_means = ast.literal_eval(regs[0])
+        memory_means = ast.literal_eval(regs[1])
+
+        return [cpu_means, memory_means]
+    except:
+        return None
+    finally:
+        cursor.close()
+        conexao.close()
+
+def select_critical_cpu_hosts():
+    try:
+        conexao = create_connection()
+        cursor = conexao.cursor()
+        query = """
+            SELECT h.uuid, h.hostname, c.total_cpu_usage_percent
+            FROM tb_host h
+                JOIN tb_cpu c ON h.uuid = c.host_uuid
+            WHERE 
+                c.total_cpu_usage_percent > 90;
+        """
+        cursor.execute(query)
+        result = cursor.fetchall()
+        temp = []
+        for item in result:
+            item = list(item)
+            item[2] = float(item[2])
+            temp.append(item)
+        
+        return temp
+        
+    finally:
+        cursor.close()
+        conexao.close()
+
+def select_warning_cpu_hosts():
+    try:
+        conexao = create_connection()
+        cursor = conexao.cursor()
+        query = """
+            SELECT h.uuid, h.hostname, c.total_cpu_usage_percent
+            FROM tb_host h
+                JOIN tb_cpu c ON h.uuid = c.host_uuid
+            WHERE 
+                c.total_cpu_usage_percent BETWEEN 75.0 AND 89.0;
+        """
+        cursor.execute(query)
+        result = cursor.fetchall()
+        temp = []
+        for item in result:
+            item = list(item)
+            item[2] = float(item[2])
+            temp.append(item)
+        
+        return temp
+        
+    finally:
+        cursor.close()
+        conexao.close()
 
 ######################
 ##### Controller #####
@@ -630,35 +696,12 @@ async def connects():
 
 @app.get("/dashboard/cpu_info")
 async def cpu_info():   # IMPLEMENTAR APÓS ATUALIZAÇÃO DO BANCO!!!!
-    from random import randint
+    means = select_dashboard_means()
+    cpu_means = means[0]
+
+    critical_hosts = select_critical_cpu_hosts()
+    warning_hosts = select_warning_cpu_hosts()
     
-    # PLACEHOLDER
-    cpu_means = []
-    for i in range(0, 24):
-        cpu_means.append(float(randint(1, 97)))
-
-    critical_hosts = {
-        f"fakehost0{randint(1, 20)}": {
-            "cpu_usage": randint(90, 99),
-            "uuid": "fake-uuid-124313-12341234"
-            },
-        f"fakehost0{randint(1, 20)}": {
-            "cpu_usage": randint(90, 99),
-            "uuid": "fake-uuid-1243124-1243441"
-            }
-    }
-        
-    warning_hosts = {
-        f"fakehost0{randint(20, 40)}": {
-            "cpu_usage": randint(60, 89),
-            "uuid": "fake-uuid-12s313-123g1234"
-            },
-        f"fakehost0{randint(20, 40)}": {
-            "cpu_usage": randint(60, 89),
-            "uuid": "fake-uuid-1240124-124t441"
-            }
-    }
-
     data = {
         "CPU_MEAN": cpu_means,
         "HOSTS":{
@@ -668,6 +711,11 @@ async def cpu_info():   # IMPLEMENTAR APÓS ATUALIZAÇÃO DO BANCO!!!!
     }
 
     return data
+    
+
+@app.get("/dashboard/memory_info")
+async def memory_info():
+    pass
 
 @app.get("/hosts/update")
 async def update():
@@ -775,6 +823,8 @@ def update_thread():
                 hist_cpu = json.loads(hist_cpu)
                 hist_cpu.append(cpu_mean)
                 hist_cpu = [float(x) if isinstance(x, Decimal) else x for x in hist_cpu]
+                if len(hist_cpu) > 24:
+                    hist_cpu = hist_cpu[-24:]
 
             if hist_memory == None:
                 hist_memory = [memory_mean]
@@ -782,6 +832,8 @@ def update_thread():
                 hist_memory = json.loads(hist_memory)
                 hist_memory.append(memory_mean)
                 hist_memory = [float(x) if isinstance(x, Decimal) else x for x in hist_memory]
+                if len(hist_memory) > 24:
+                    hist_memory = hist_memory[-24:]
 
             update_dashboard = f"""
                 UPDATE tb_dashboard
