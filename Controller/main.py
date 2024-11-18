@@ -800,7 +800,7 @@ def update_thread():
         response = requests.get(url="http://127.0.0.1:6969/hosts/update")
         print(response.status_code)
 
-        cicle += 1
+        current_cicle += 1
 
 def update_conns():
     conexao = create_connection()
