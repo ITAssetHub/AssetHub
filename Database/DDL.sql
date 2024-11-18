@@ -236,7 +236,14 @@ CREATE TABLE IF NOT EXISTS `db_asset_hub`.`tb_interface_data` (
 ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS `db_asset_hub`.`tb_host_list` (
-  `id` INT NOT NULL,
+  `id` TINYINT NOT NULL,
   `hosts` JSON NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `db_asset_hub`.`tb_dashboard` (
+  `id` TINYINT NOT NULL,
+  `cpu_mean_history` JSON NULL,
+  `memory_mean_history` JSON NULL,
   PRIMARY KEY (`id`))
 ENGINE = InnoDB;
