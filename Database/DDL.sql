@@ -128,6 +128,7 @@ CREATE TABLE IF NOT EXISTS `db_asset_hub`.`tb_cpu` (
   `current_frequency` VARCHAR(45) NULL,
   `total_cpu_usage_percent` DECIMAL(5,2) NULL,
   `cpu_usage_percent_history` JSON NULL,
+  `cpu_mean` DECIMAL(5,2) NULL,
   INDEX `fk_tb_cpu_tb_host1_idx` (`host_uuid` ASC) VISIBLE,
   PRIMARY KEY (`host_uuid`),
   CONSTRAINT `fk_tb_cpu_tb_host1`
@@ -148,6 +149,7 @@ CREATE TABLE IF NOT EXISTS `db_asset_hub`.`tb_memory` (
   `used_memory` VARCHAR(45) NULL,
   `memory_usage_percent` DECIMAL(5,2) NULL,
   `memory_usage_percent_history` JSON NULL,
+  `memory_mean` DECIMAL(5,2) NULL,
   PRIMARY KEY (`host_uuid`),
   CONSTRAINT `fk_tb_memory_tb_host1`
     FOREIGN KEY (`host_uuid`)
