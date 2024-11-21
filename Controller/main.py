@@ -569,6 +569,31 @@ def select_warning_cpu_hosts():
         cursor.close()
         conexao.close()
 
+def select_normal_cpu_hosts():
+    try:
+        conexao = create_connection()
+        cursor = conexao.cursor()
+        query = """
+            SELECT h.uuid, h.hostname, c.total_cpu_usage_percent
+            FROM tb_host h
+                JOIN tb_cpu c ON h.uuid = c.host_uuid
+            WHERE 
+                c.total_cpu_usage_percent < 75.0;
+        """
+        cursor.execute(query)
+        result = cursor.fetchall()
+        temp = []
+        for item in result:
+            item = list(item)
+            item[2] = float(item[2])
+            temp.append(item)
+        
+        return temp
+        
+    finally:
+        cursor.close()
+        conexao.close()
+
 ######################
 ##### Controller #####
 
@@ -701,12 +726,14 @@ async def cpu_info():   # IMPLEMENTAR APÓS ATUALIZAÇÃO DO BANCO!!!!
 
     critical_hosts = select_critical_cpu_hosts()
     warning_hosts = select_warning_cpu_hosts()
+    normal_hosts = select_normal_cpu_hosts()
     
     data = {
         "CPU_MEAN": cpu_means,
         "HOSTS":{
             "CRITICAL HOSTS": critical_hosts,
-            "WARNING HOSTS": warning_hosts
+            "WARNING HOSTS": warning_hosts,
+            "NORMAL HOSTS:": normal_hosts
         }
     }
 
