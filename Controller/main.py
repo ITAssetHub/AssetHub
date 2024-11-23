@@ -594,6 +594,81 @@ def select_normal_cpu_hosts():
         cursor.close()
         conexao.close()
 
+def select_critical_memory_hosts():
+    try:
+        conexao = create_connection()
+        cursor = conexao.cursor()
+        query = """
+            SELECT h.uuid, h.hostname, c.memory_usage_percent
+            FROM tb_host h
+                JOIN tb_memory c ON h.uuid = c.host_uuid
+            WHERE 
+                c.memory_usage_percent > 90;
+        """
+        cursor.execute(query)
+        result = cursor.fetchall()
+        temp = []
+        for item in result:
+            item = list(item)
+            item[2] = float(item[2])
+            temp.append(item)
+        
+        return temp
+        
+    finally:
+        cursor.close()
+        conexao.close()
+
+def select_warning_memory_hosts():
+    try:
+        conexao = create_connection()
+        cursor = conexao.cursor()
+        query = """
+            SELECT h.uuid, h.hostname, c.memory_usage_percent
+            FROM tb_host h
+                JOIN tb_memory c ON h.uuid = c.host_uuid
+            WHERE 
+                c.memory_usage_percent BETWEEN 75.0 AND 89.0;
+        """
+        cursor.execute(query)
+        result = cursor.fetchall()
+        temp = []
+        for item in result:
+            item = list(item)
+            item[2] = float(item[2])
+            temp.append(item)
+        
+        return temp
+        
+    finally:
+        cursor.close()
+        conexao.close()
+
+def select_normal_memory_hosts():
+    try:
+        conexao = create_connection()
+        cursor = conexao.cursor()
+        query = """
+            SELECT h.uuid, h.hostname, c.memory_usage_percent
+            FROM tb_host h
+                JOIN tb_memory c ON h.uuid = c.host_uuid
+            WHERE 
+                c.memory_usage_percent < 75.0;
+        """
+        cursor.execute(query)
+        result = cursor.fetchall()
+        temp = []
+        for item in result:
+            item = list(item)
+            item[2] = float(item[2])
+            temp.append(item)
+        
+        return temp
+        
+    finally:
+        cursor.close()
+        conexao.close()
+
 ######################
 ##### Controller #####
 
@@ -720,7 +795,7 @@ async def connects():
     return {"Conns": array}
 
 @app.get("/dashboard/cpu_info")
-async def cpu_info():   # IMPLEMENTAR APÓS ATUALIZAÇÃO DO BANCO!!!!
+async def cpu_info():
     means = select_dashboard_means()
     cpu_means = means[0]
 
@@ -742,7 +817,23 @@ async def cpu_info():   # IMPLEMENTAR APÓS ATUALIZAÇÃO DO BANCO!!!!
 
 @app.get("/dashboard/memory_info")
 async def memory_info():
-    pass
+    means = select_dashboard_means()
+    memory_means = means[1]
+
+    critical_hosts = select_critical_memory_hosts()
+    warning_hosts = select_warning_memory_hosts()
+    normal_hosts = select_normal_memory_hosts()
+    
+    data = {
+        "MEMORY_MEAN": memory_means,
+        "HOSTS":{
+            "CRITICAL HOSTS": critical_hosts,
+            "WARNING HOSTS": warning_hosts,
+            "NORMAL HOSTS:": normal_hosts
+        }
+    }
+
+    return data
 
 @app.get("/hosts/update")
 async def update():
