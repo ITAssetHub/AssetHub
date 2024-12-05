@@ -48,12 +48,23 @@ def insert_host(data, addr):
     regs = cursor.fetchall()
 
     if len(regs) == 0:
+
+        sql_is_there_hardware = f"SELECT * FROM tb_hardware WHERE hardware = '{data_dict['systemInfo']['hardware']}'"
+        cursor.execute(sql_is_there_hardware)
+        hardwares = cursor.fetchall()
+        if len(hardwares) == 0:
+            sql_insert_hardware = f"""
+                INSERT INTO tb_hardware (hardware)
+                VALUES ('{data_dict['systemInfo']['hardware']}')
+                """
+            cursor.execute(sql_insert_hardware)
+
+
         # (uuid, hostname, data, last_report_date, os_name, os_pretty_name, kernel_release, os_type, architecture, boot_time, total_bytes_sent, total_bytes_recv, disk_total_read, disk_total_write)
         sql_host = f"""
-            INSERT INTO tb_host (uuid, hostname, data, ipv4, last_report_date, os_name, os_pretty_name, os_release, kernel_release, os_type, architecture, boot_time, total_bytes_sent, total_bytes_recv, disk_total_read, disk_total_write)
-            VALUES ('{data_dict['uuid']}', '{data_dict['systemInfo']['hostname']}', '{data}', '{data_dict['systemInfo']['ipv4']}', '{data_dict['date']}', '{data_dict['systemInfo']['OS_Name']}', '{data_dict['systemInfo']['OS_Pretty_Name']}', '{data_dict['systemInfo']['OS_Release']}', '{data_dict['systemInfo']['kernelRelease']}', '{data_dict['systemInfo']['OS_Type']}', '{data_dict['systemInfo']['arch']}', '{data_dict['bootTime']}', '{data_dict['networkInfo']['totalBytesSent']}', '{data_dict['networkInfo']['totalBytesRecv']}', '{data_dict['diskInfo']['totalRead']}', '{data_dict['diskInfo']['totalWrite']}')
+            INSERT INTO tb_host (uuid, hostname, data, ipv4, last_report_date, hardware, os_name, os_pretty_name, os_release, kernel_release, os_type, architecture, boot_time, total_bytes_sent, total_bytes_recv, disk_total_read, disk_total_write)
+            VALUES ('{data_dict['uuid']}', '{data_dict['systemInfo']['hostname']}', '{data}', '{data_dict['systemInfo']['ipv4']}', '{data_dict['date']}', '{data_dict['systemInfo']['hardware']}', '{data_dict['systemInfo']['OS_Name']}', '{data_dict['systemInfo']['OS_Pretty_Name']}', '{data_dict['systemInfo']['OS_Release']}', '{data_dict['systemInfo']['kernelRelease']}', '{data_dict['systemInfo']['OS_Type']}', '{data_dict['systemInfo']['arch']}', '{data_dict['bootTime']}', '{data_dict['networkInfo']['totalBytesSent']}', '{data_dict['networkInfo']['totalBytesRecv']}', '{data_dict['diskInfo']['totalRead']}', '{data_dict['diskInfo']['totalWrite']}')
             """
-        print(sql_host)
 
         sql_cpu = f"""
             INSERT INTO tb_cpu (host_uuid, physical_cores, logical_cores, minFrequency, maxFrequency, current_frequency, total_cpu_usage_percent)
@@ -113,6 +124,18 @@ def insert_host(data, addr):
             conexao.commit()
 
     else:
+
+        sql_is_there_hardware = f"SELECT * FROM tb_hardware WHERE hardware = '{data_dict['systemInfo']['hardware']}'"
+        cursor.execute(sql_is_there_hardware)
+        hardwares = cursor.fetchall()
+        if len(hardwares) == 0:
+            sql_insert_hardware = f"""
+                INSERT INTO tb_hardware (hardware)
+                VALUES ('{data_dict['systemInfo']['hardware']}')
+                """
+            cursor.execute(sql_insert_hardware)
+
+
         # TB_CPU UPDATE
         sql_select_cpu_percent = f"""
             SELECT total_cpu_usage_percent FROM tb_cpu WHERE host_uuid = '{data_dict['uuid']}'
@@ -332,6 +355,7 @@ def insert_host(data, addr):
                 data = '{data}',
                 ipv4 = '{data_dict['systemInfo']['ipv4']}',
                 last_report_date = '{data_dict['date']}',
+                hardware = '{data_dict['systemInfo']['hardware']}',
                 os_name = '{data_dict['systemInfo']['OS_Name']}',
                 os_pretty_name = '{data_dict['systemInfo']['OS_Pretty_Name']}',
                 os_release = '{data_dict['systemInfo']['OS_Release']}',
