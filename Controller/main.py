@@ -394,8 +394,6 @@ def select_all_hosts():
         rows = cursor.fetchall()
         result = [dict(zip(column_names, row)) for row in rows]
         
-        print(result)
-
         return result
     finally:
         cursor.close()
@@ -505,10 +503,18 @@ def select_all_hardware():
     try:
         conexao = create_connection()
         cursor = conexao.cursor()
-        sql = "SELECT * FROM tb_hardware;"
+        sql = """SELECT h.hardware, h.description, COUNT(host.uuid) AS count_hosts
+                FROM tb_hardware h
+                LEFT JOIN tb_host host ON h.hardware = host.hardware
+                GROUP BY h.hardware, h.description;
+                """
         cursor.execute(sql)
-        regs = cursor.fetchall()
-        return regs
+
+        column_names = [column[0] for column in cursor.description]
+        rows = cursor.fetchall()
+        result = [dict(zip(column_names, row)) for row in rows]
+
+        return result
     finally:
         cursor.close()
         conexao.close()
@@ -926,7 +932,10 @@ async def get_hardware_count():
 
 @app.get("/hardware/get_hardwares")
 async def get_hardwares():
-    pass
+    hardwares = select_all_hardware()
+    if len(hardwares) == 0:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Hardwares não encontrados")
+    return {"Hardwares": hardwares}
 
 @app.get("/hardware/get_hardware/{hostname}")
 async def get_hardware():
