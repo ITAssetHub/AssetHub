@@ -747,7 +747,6 @@ async def post_host(request: Request):
 ## User requests:
 
 async def authenticate_user(username: str, password: str):
-
     password = password.encode("utf-8")
     user_hash = hashlib.sha256(password)
     user_hash = user_hash.hexdigest()
@@ -924,6 +923,18 @@ async def os_types_count():  #TERMINE ISSO !!!!!
 async def get_hardware_count():
     hardwares = select_all_hardware()
     return {"Hardware_Count": len(hardwares)}
+
+@app.get("/hardware/get_hardwares")
+async def get_hardwares():
+    pass
+
+@app.get("/hardware/get_hardware/{hostname}")
+async def get_hardware():
+    pass
+
+@app.put("/hardware/update_description/{hostname}")
+async def update_hardware_description():
+    pass
 
 ## Ambiente requests: 
 ## Site/Datacenter requests:
